@@ -1,97 +1,94 @@
-select * from CovidDeaths$
-order by 3,4;
-
-
---Death percentage in United State
-select location, date, total_cases, total_deaths, (total_deaths/total_cases)*100 AS DeathPercentage
-from CovidDeaths$
-Where location like '%states%'
-order by 1,2;
-
-
---Total cases VS Population
--- Percentage of total Covid cases compared to population in United State
-
-select location, date, population, total_cases, (total_cases/population)*100 AS PercentageOfCovidCase
-from CovidDeaths$
-Where location like '%states%'
-order by 1,2;
+SELECT * FROM CovidDeaths$
+ORDER BY 3,4;
 
 
 
---Countries with highest infection rate compared to their Population
 
-select location, population, date, MAX(total_cases) AS HighestInfectedCount, MAX((total_cases/population))*100 AS PercentPopulationInfected
-from CovidDeaths$
-Group by location, population, date
-order by PercentPopulationInfected DESC;
+--TOTAL CASES VS POPULATION
+-- PERCENTAGE OF TOTAL COVID CASES COMPARED TO POPULATION IN UNITED STATES
+SELECT location, date, population, total_cases, (total_cases/population)*100 AS PercentageOfCovidCase
+FROM CovidDeaths$
+WHERE location like '%states%'
+ORDER BY 1,2;
+
+
+
+--COUNTRIES WITH HIGHEST INFECTION RATE COMPARED TO THEIR POPULATION
+
+SELECT location, population, date, MAX(total_cases) AS HighestInfectedCount, MAX((total_cases/population))*100 AS PercentPopulationInfected
+FROM CovidDeaths$
+GROUP BY location, population, date
+ORDER BY PercentPopulationInfected DESC;
  
 
 
---Total death cases in each continent
+--TOTAL DEATHS CASES IN EACH CONTINENT
 
-select continent,  MAX(Cast(total_deaths as INT)) AS TotalDeathCount
-from CovidDeaths$
-Where continent is not null
-Group by continent
-order by TotalDeathCount DESC;
-
-
---Total cases, Total death and Death Percent 
-Select date, SUM(new_cases) AS Toatl_cases, SUM(cast(new_deaths AS INT)) AS Total_deaths, 
-SUM(Cast(new_deaths as INT))/SUM(new_cases) * 100 AS DeathPercentage
-from CovidDeaths$
-Where continent is not null
-Group by date
-order by 1, 4 DESC
+SELECT continent,  MAX(Cast(total_deaths as INT)) AS TotalDeathCount
+FROM CovidDeaths$
+WHERE continent is not null
+GROUP BY continent
+ORDER BY TotalDeathCount DESC;
 
 
+--TOTAL CASES, TOTAL DEATHS, AND DEATH PERCENT
+
+Select date, SUM(new_cases) AS Toatl_cases, SUM(CAST(new_deaths AS INT)) AS Total_deaths, 
+SUM(CAST(new_deaths as INT))/SUM(new_cases) * 100 AS DeathPercentage
+FROM CovidDeaths$
+WHERE continent is not null
+GROUP BY date
+ORDER BY 1, 4 DESC
 
 
---Global Total cases, Total death and death Percent
-
-Select SUM(new_cases) AS Toatl_cases, SUM(cast(new_deaths AS INT)) AS Total_deaths, 
-SUM(Cast(new_deaths as INT))/SUM(new_cases) * 100 AS DeathPercentage
-from CovidDeaths$
-Where continent is not null
-order by 1,2;
 
 
--- Total death count for each continent
-Select location, SUM(cast(new_deaths AS INT)) AS TotalDeathCount
-from CovidDeaths$
-Where continent is null AND location not in ('World', 'European Union', 'International', 'Upper middle income', 'High income', 'Lower middle income', 'Low income')
-group by location 
-order by TotalDeathCount DESC
+--GLOBAL TOTAL CASES, TOTAL DEATHS, AND DEATH PERCENT
+
+SELECT SUM(new_cases) AS Toatl_cases, SUM(CAST(new_deaths AS INT)) AS Total_deaths, 
+SUM(CAST(new_deaths as INT))/SUM(new_cases) * 100 AS DeathPercentage
+FROM CovidDeaths$
+WHERE continent is not null
+ORDER BY 1,2;
 
 
--- Joining the Covid and Vaccination table
-select * 
+-- TOTAL DEATH COUNT FOR EACH CONTINENT
+
+SELECT location, SUM(CAST(new_deaths AS INT)) AS TotalDeathCount
+FROM CovidDeaths$
+WHERE continent is null AND location not in ('World', 'European Union', 'International', 'Upper middle income', 'High income', 'Lower middle income', 'Low income')
+GROUP BY location 
+ORDER BY TotalDeathCount DESC
+
+
+-- JOINING THE COVID AND VACCINATION TABLE 
+
+SELECT * 
 from CovidDeaths$ de
-join CovidVaccination$ va
-On de.location = va.location
+JOIN CovidVaccination$ va
+ON de.location = va.location
 AND de.date = va.date;
 
 
 
-select de.continent, de.location, de.date, de.population, va.new_vaccinations 
-from CovidDeaths$ de
-join CovidVaccination$ va
-On de.location = va.location
+SELECT de.continent, de.location, de.date, de.population, va.new_vaccinations 
+FROM CovidDeaths$ de
+JOIN CovidVaccination$ va
+ON de.location = va.location
 AND de.date = va.date
-Where de.continent is not null
-order by 2,3;
+WHERE de.continent is not null
+ORDER BY 2,3;
 
 
--- Using Partition by
-select de.continent, de.location, de.date, de.population, va.new_vaccinations, SUM(cast(va.new_vaccinations AS INT)) 
-OVER (partition by de.location order by de.location, de.date) AS SumPeopleVaccinated
-from CovidDeaths$ de
-join CovidVaccination$ va
-On de.location = va.location
+-- USING PARTITION BY
+SELECT de.continent, de.location, de.date, de.population, va.new_vaccinations, SUM(cast(va.new_vaccinations AS INT)) 
+OVER (PARTITION BY de.location order by de.location, de.date) AS SumPeopleVaccinated
+FROM CovidDeaths$ de
+JOIN CovidVaccination$ va
+ON de.location = va.location
 AND de.date = va.date
-Where de.continent is not null
-order by 2,3;
+WHERE de.continent is not null
+ORDER BY 2,3;
 
 
 
@@ -100,51 +97,51 @@ order by 2,3;
 WITH popVSvacc (continent, location, date, population, new_vaccinations, SumPeopleVaccinated)
 AS
 (
-select de.continent, de.location, de.date, de.population, va.new_vaccinations, SUM(cast(va.new_vaccinations AS INT)) 
-OVER (partition by de.location order by de.location, de.date) AS SumPeopleVaccinated
-from CovidDeaths$ de
-join CovidVaccination$ va
-On de.location = va.location
+SELECT de.continent, de.location, de.date, de.population, va.new_vaccinations, SUM(cast(va.new_vaccinations AS INT)) 
+OVER (PARTITION BY de.location order by de.location, de.date) AS SumPeopleVaccinated
+FROM CovidDeaths$ de
+JOIN CovidVaccination$ va
+ON de.location = va.location
 AND de.date = va.date
-Where de.continent is not null
+WHERE de.continent is not null
 )
 
-select *, (SumPeopleVaccinated/population)*100
-from popVSvacc; 
+SELECT *, (SumPeopleVaccinated/population)*100
+FROM popVSvacc; 
 
 
 
 --CREATING TEMP TABLE
 
-Drop Table if exists #PercentPopulationVaccinated   
-Create table #PercentPopulationVaccinated (continent VARCHAR(255),
+DROP TABLE IF EXISTS #PercentPopulationVaccinated   
+CREATE TABLE #PercentPopulationVaccinated (continent VARCHAR(255),
 										   location VARCHAR(255),
 										   date datetime,
 										   population INT,
 										   new_vaccinations INT,
 										   SumPeopleVaccinated INT)
 INSERT INTO #PercentPopulationVaccinated
-select de.continent, de.location, de.date, de.population, va.new_vaccinations, SUM(cast(va.new_vaccinations AS INT)) 
-OVER (partition by de.location order by de.location, de.date) AS SumPeopleVaccinated
-from CovidDeaths$ de
-join CovidVaccination$ va
+SELECT de.continent, de.location, de.date, de.population, va.new_vaccinations, SUM(cast(va.new_vaccinations AS INT)) 
+OVER (PARTITION BY de.location order by de.location, de.date) AS SumPeopleVaccinated
+FROM CovidDeaths$ de
+JOIN CovidVaccination$ va
 On de.location = va.location
 AND de.date = va.date
 
-select *, (SumPeopleVaccinated/population)*100
-from #PercentPopulationVaccinated ; 
+SELECT *, (SumPeopleVaccinated/population)*100
+FROM #PercentPopulationVaccinated ; 
 
 
 --CREATING VIEW
 
 CREATE VIEW PercentPopulationVaccinated2
 AS
-select de.continent, de.location, de.date, de.population, va.new_vaccinations, 
-SUM(cast(va.new_vaccinations AS INT)) OVER (partition by de.location order by de.location, de.date) AS SumPeopleVaccinated
-from CovidDeaths$ de
-join CovidVaccination$ va
+SELECT de.continent, de.location, de.date, de.population, va.new_vaccinations, 
+SUM(cast(va.new_vaccinations AS INT)) OVER (PARTITION BY de.location order by de.location, de.date) AS SumPeopleVaccinated
+FROM CovidDeaths$ de
+JOIN CovidVaccination$ va
 On de.location = va.location
 AND de.date = va.date
-where de.continent is not null;
+WHERE de.continent is not null;
 
-select * from PercentPopulationVaccinated2
+SELECT * FROM PercentPopulationVaccinated2
